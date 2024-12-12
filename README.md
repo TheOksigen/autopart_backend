@@ -86,6 +86,93 @@ npm start
 - `PUT /api/products/:id` - Update product
 - `DELETE /api/products/:id` - Delete product
 
+### Bulk Operations
+- `POST /api/products/bulk` - Create multiple products at once
+  - Request body should be an array of product objects
+  - Each product object must contain:
+    - `OemNo` (String, unique)
+    - `codeOfProduct` (String)
+    - `image` (String)
+    - `name` (String, defaults to "no name")
+    - `price` (Number)
+    - `priceWithKDV` (Number)
+  - Optional fields:
+    - `discount` (Number, defaults to 0)
+    - `iskonto` (String)
+    - `manufacturer` (String, defaults to empty string)
+    - `stock` (Boolean)
+  - Returns status code 201 on success with an object containing:
+    - `message`: Operation summary message
+    - `totalProcessed`: Total number of products processed
+    - `successCount`: Number of successfully created products
+    - `errorCount`: Number of failed operations
+    - `successfulProducts`: Array of successfully created products
+    - `errors`: Array of failed operations with error messages
+
+Example bulk create request:
+```json
+POST /api/products/bulk
+[
+  {
+    "OemNo": "BP-123",
+    "codeOfProduct": "ABC123",
+    "image": "image_url_1",
+    "name": "Brake Pad",
+    "price": 100,
+    "priceWithKDV": 118,
+    "discount": 0,
+    "iskonto": "10%",
+    "manufacturer": "Bosch",
+    "stock": true
+  },
+  {
+    "OemNo": "OF-789",
+    "codeOfProduct": "XYZ789",
+    "image": "image_url_2",
+    "name": "Oil Filter",
+    "price": 50,
+    "priceWithKDV": 59,
+    "manufacturer": "Mann"
+  }
+]
+```
+
+Example response:
+```json
+{
+  "message": "Bulk product creation completed",
+  "totalProcessed": 2,
+  "successCount": 1,
+  "errorCount": 1,
+  "successfulProducts": [
+    {
+      "id": "uuid-1",
+      "OemNo": "BP-123",
+      "codeOfProduct": "ABC123",
+      "image": "image_url_1",
+      "name": "Brake Pad",
+      "price": 100,
+      "priceWithKDV": 118,
+      "discount": 0,
+      "iskonto": "10%",
+      "manufacturer": "Bosch",
+      "stock": true
+    }
+  ],
+  "errors": [
+    {
+      "OemNo": "OF-789",
+      "error": "Product with this OEM number already exists"
+    }
+  ]
+}
+```
+
+Notes:
+- The bulk create operation processes each product independently. If one product fails to be created (e.g., due to a duplicate OEM number), the operation continues with the remaining products.
+- Request body size limit is set to 50MB.
+- All string fields are automatically converted to strings, numbers to numbers, and booleans to booleans.
+
 ### Authentication
 - `POST /api/auth/register` - Register user
 - `POST /api/auth/login` - Login user
