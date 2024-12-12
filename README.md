@@ -94,45 +94,47 @@ npm start
     - `codeOfProduct` (String)
     - `image` (String)
     - `name` (String, defaults to "no name")
-    - `price` (Number)
-    - `priceWithKDV` (Number)
+    - `priceWithOutKDV` (Float)
+    - `priceWithKDV` (Float)
   - Optional fields:
-    - `discount` (Number, defaults to 0)
+    - `discouisnt` (Float, defaults to 0)
     - `iskonto` (String)
-    - `manufacturer` (String, defaults to empty string)
-    - `stock` (Boolean)
+    - `manufacturer` (String, will create or use existing manufacturer)
+    - `stock` (Boolean, defaults to true)
   - Returns status code 201 on success with an object containing:
     - `message`: Operation summary message
     - `totalProcessed`: Total number of products processed
     - `successCount`: Number of successfully created products
     - `errorCount`: Number of failed operations
-    - `successfulProducts`: Array of successfully created products
+    - `successfulProducts`: Array of created products with manufacturer details
     - `errors`: Array of failed operations with error messages
 
 Example bulk create request:
 ```json
-POST /api/products/bulk
 [
   {
-    "OemNo": "BP-123",
-    "codeOfProduct": "ABC123",
-    "image": "image_url_1",
-    "name": "Brake Pad",
-    "price": 100,
-    "priceWithKDV": 118,
-    "discount": 0,
-    "iskonto": "10%",
-    "manufacturer": "Bosch",
-    "stock": true  // var = ture, yox=false, default=true
+    "OemNo": "15208-65F0E",
+    "codeOfProduct": "NIS-001",
+    "image": "https://example.com/images/oil-filter-nissan.jpg",
+    "name": "Nissan Qashqai Yağ Filteri",
+    "priceWithOutKDV": 180.50,
+    "priceWithKDV": 212.99,
+    "discouisnt": 10,
+    "iskonto": "5%",
+    "manufacturer": "Nissan",
+    "stock": true
   },
   {
-    "OemNo": "OF-789",
-    "codeOfProduct": "XYZ789",
-    "image": "image_url_2",
-    "name": "Oil Filter",
-    "price": 50,
-    "priceWithKDV": 59,
-    "manufacturer": "Mann"
+    "OemNo": "04152-YZZA6",
+    "codeOfProduct": "TOY-002",
+    "image": "https://example.com/images/oil-filter-toyota.jpg",
+    "name": "Toyota Corolla Yağ Filteri",
+    "priceWithOutKDV": 165.00,
+    "priceWithKDV": 194.70,
+    "discouisnt": 0,
+    "iskonto": "8%",
+    "manufacturer": "Toyota",
+    "stock": true
   }
 ]
 ```
@@ -142,36 +144,62 @@ Example response:
 {
   "message": "Bulk product creation completed",
   "totalProcessed": 2,
-  "successCount": 1,
-  "errorCount": 1,
+  "successCount": 2,
+  "errorCount": 0,
   "successfulProducts": [
     {
       "id": "uuid-1",
-      "OemNo": "BP-123",
-      "codeOfProduct": "ABC123",
-      "image": "image_url_1",
-      "name": "Brake Pad",
-      "price": 100,
-      "priceWithKDV": 118,
-      "discount": 0,
-      "iskonto": "10%",
-      "manufacturer": "Bosch",
-      "stock": true
+      "OemNo": "15208-65F0E",
+      "codeOfProduct": "NIS-001",
+      "image": "https://example.com/images/oil-filter-nissan.jpg",
+      "name": "Nissan Qashqai Yağ Filteri",
+      "priceWithOutKDV": 180.50,
+      "priceWithKDV": 212.99,
+      "discouisnt": 10,
+      "iskonto": "5%",
+      "stock": true,
+      "manufacturerId": "manufacturer-uuid-1",
+      "Manufacturer": {
+        "id": "manufacturer-uuid-1",
+        "name": "Nissan",
+        "createdAt": "2024-12-12T12:44:20.000Z",
+        "updatedAt": "2024-12-12T12:44:20.000Z"
+      }
+    },
+    {
+      "id": "uuid-2",
+      "OemNo": "04152-YZZA6",
+      "codeOfProduct": "TOY-002",
+      "image": "https://example.com/images/oil-filter-toyota.jpg",
+      "name": "Toyota Corolla Yağ Filteri",
+      "priceWithOutKDV": 165.00,
+      "priceWithKDV": 194.70,
+      "discouisnt": 0,
+      "iskonto": "8%",
+      "stock": true,
+      "manufacturerId": "manufacturer-uuid-2",
+      "Manufacturer": {
+        "id": "manufacturer-uuid-2",
+        "name": "Toyota",
+        "createdAt": "2024-12-12T12:44:20.000Z",
+        "updatedAt": "2024-12-12T12:44:20.000Z"
+      }
     }
   ],
-  "errors": [
-    {
-      "OemNo": "OF-789",
-      "error": "Product with this OEM number already exists"
-    }
-  ]
+  "errors": []
 }
 ```
 
 Notes:
-- The bulk create operation processes each product independently. If one product fails to be created (e.g., due to a duplicate OEM number), the operation continues with the remaining products.
-- Request body size limit is set to 50MB.
-- All string fields are automatically converted to strings, numbers to numbers, and booleans to booleans.
+- The bulk create operation processes each product independently
+- If a manufacturer name is provided, it will:
+  1. First try to find an existing manufacturer with that name (case-insensitive)
+  2. If not found, create a new manufacturer
+  3. Link the product to the manufacturer
+- Request body size limit is set to 50MB
+- All string fields are automatically converted to strings, numbers to numbers
+- Stock defaults to true unless explicitly set to false
+- Manufacturer relationship is optional but recommended for proper categorization
 
 ### Authentication
 - `POST /api/auth/register` - Register user
@@ -280,9 +308,9 @@ model Product {
   codeOfProduct String
   image         String
   name          String     @default("no name")
-  price         Int
-  priceWithKDV  Int
-  discount      Int        @default(0)
+  priceWithOutKDV Float
+  priceWithKDV  Float
+  discouisnt    Float      @default(0)
   iskonto       String?
   manufacturer  String?    @default("")
   stock         Boolean    @default(true)
@@ -405,9 +433,9 @@ Success Response (200):
             "OemNo": "04465-33471",
             "codeOfProduct": "TBP-123",
             "image": "image_url",
-            "price": 150,
-            "priceWithKDV": 177,
-            "discount": 0,
+            "priceWithOutKDV": 150.00,
+            "priceWithKDV": 177.00,
+            "discouisnt": 0,
             "iskonto": "5%",
             "manufacturer": "Toyota",
             "stock": true
@@ -432,9 +460,9 @@ Success Response (200):
     "OemNo": "04465-33471",
     "codeOfProduct": "TBP-123",
     "image": "image_url",
-    "price": 150,
-    "priceWithKDV": 177,
-    "discount": 0,
+    "priceWithOutKDV": 150.00,
+    "priceWithKDV": 177.00,
+    "discouisnt": 0,
     "iskonto": "5%",
     "manufacturer": "Toyota",
     "stock": true
@@ -453,9 +481,9 @@ Request Body:
     "OemNo": "04465-33471",
     "codeOfProduct": "TBP-123",
     "image": "image_url",
-    "price": 150,
-    "priceWithKDV": 177,
-    "discount": 0,
+    "priceWithOutKDV": 150.00,
+    "priceWithKDV": 177.00,
+    "discouisnt": 0,
     "iskonto": "5%",
     "manufacturer": "Toyota",
     "stock": true
@@ -470,9 +498,9 @@ Success Response (201):
     "OemNo": "04465-33471",
     "codeOfProduct": "TBP-123",
     "image": "image_url",
-    "price": 150,
-    "priceWithKDV": 177,
-    "discount": 0,
+    "priceWithOutKDV": 150.00,
+    "priceWithKDV": 177.00,
+    "discouisnt": 0,
     "iskonto": "5%",
     "manufacturer": "Toyota",
     "stock": true
@@ -487,10 +515,10 @@ PUT /api/products/:id
 Request Body:
 ```json
 {
-    "price": 160,
-    "priceWithKDV": 189,
+    "priceWithOutKDV": 160.00,
+    "priceWithKDV": 189.00,
     "stock": true,
-    "discount": 10
+    "discouisnt": 10
 }
 ```
 
@@ -502,9 +530,9 @@ Success Response (200):
     "OemNo": "04465-33471",
     "codeOfProduct": "TBP-123",
     "image": "image_url",
-    "price": 160,
-    "priceWithKDV": 189,
-    "discount": 10,
+    "priceWithOutKDV": 160.00,
+    "priceWithKDV": 189.00,
+    "discouisnt": 10,
     "iskonto": "5%",
     "manufacturer": "Toyota",
     "stock": true
@@ -540,8 +568,8 @@ Success Response (200):
             "product": {
                 "id": "uuid",
                 "name": "Toyota Brake Pad",
-                "price": 150,
-                "priceWithKDV": 177
+                "priceWithOutKDV": 150.00,
+                "priceWithKDV": 177.00
             }
         }
     ]
@@ -571,8 +599,8 @@ Success Response (200):
         "product": {
             "id": "uuid",
             "name": "Toyota Brake Pad",
-            "price": 150,
-            "priceWithKDV": 177
+            "priceWithOutKDV": 150.00,
+            "priceWithKDV": 177.00
         }
     }
 }
@@ -600,8 +628,8 @@ Success Response (200):
         "product": {
             "id": "uuid",
             "name": "Toyota Brake Pad",
-            "price": 150,
-            "priceWithKDV": 177
+            "priceWithOutKDV": 150.00,
+            "priceWithKDV": 177.00
         }
     }
 }
