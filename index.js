@@ -12,13 +12,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Scalar API Reference middleware
-app.use('/docs', apiReference({
-  spec: {
-    content: swaggerDefinition
-  }
-}));
-
 app.use('/api', routes);
 app.use('/api/products', bulkProductRoutes);
 
