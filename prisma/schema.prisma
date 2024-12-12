@@ -34,11 +34,11 @@ model Product {
   stock           Boolean @default(true)
   OemNo           String
   image           String
-
   discouisnt   Float         @default(0)
-  cartItems    CartItem[]
+
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  cartItems    CartItem[]
   Manufacturer Manufacturer? @relation(fields: [manufacturerId], references: [id])
 }
 
