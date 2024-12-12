@@ -5,6 +5,8 @@ const createBulkProducts = async (req, res) => {
     try {
         const products = req.body;
 
+        console.log(products)
+
         if (!Array.isArray(products)) {
             return res.status(400).json({ message: 'Request body must be an array of products' });
         }
@@ -13,22 +15,19 @@ const createBulkProducts = async (req, res) => {
         const errors = [];
 
         for (const product of products) {
-            try {
-                // Validate required fields
+            try {                   
                 if (!product.OemNo || !product.codeOfProduct || !product.image || 
-                    !product.priceWithOutKDV || !product.priceWithKDV) {
+                    !product.priceWithOutKDV || !product.priceWithKDV || !product.codeOfProduct) {
                     errors.push({
-                        OemNo: product.OemNo || 'unknown',
+                        ID: product.codeOfProduct || 'unknown',
                         error: 'Missing required fields'
                     });
                     continue;
                 }
-
-                // Handle manufacturer
+                
                 let manufacturerId = null;
                 if (product.manufacturer) {
-                    try {
-                        // Try to find existing manufacturer by name
+                    try {                        
                         let manufacturer = await prisma.manufacturer.findFirst({
                             where: { 
                                 name: {
@@ -37,8 +36,7 @@ const createBulkProducts = async (req, res) => {
                                 }
                             }
                         });
-
-                        // If manufacturer doesn't exist, create it
+                       
                         if (!manufacturer) {
                             manufacturer = await prisma.manufacturer.create({
                                 data: {
@@ -56,19 +54,18 @@ const createBulkProducts = async (req, res) => {
                         continue;
                     }
                 }
-
-                // Create product with validated data
+                
                 const createdProduct = await prisma.product.create({
                     data: {
-                        OemNo: String(product.OemNo),
+                        OemNo: String(product.OemNo.split("\n")) || 'unknown',
                         codeOfProduct: String(product.codeOfProduct),
                         image: String(product.image),
                         name: String(product.name || 'no name'),
-                        priceWithOutKDV: Number(product.priceWithOutKDV),
-                        priceWithKDV: Number(product.priceWithKDV),
+                        priceWithOutKDV: Number(product.priceWithOutKDV.replace(/[^\d.]/g, "")),
+                        priceWithKDV: Number(product.priceWithKDV.replace(/[^\d.]/g, "")),
                         discouisnt: Number(product.discouisnt || 0),
-                        iskonto: product.iskonto ? String(product.iskonto) : null,
-                        stock: product.stock === false ? false : true,
+                        iskonto: String(product.iskonto.split("\n")),
+                        stock: product.stock.includes('var') ? true : false,
                         manufacturerId: manufacturerId,
                     },
                     include: {
