@@ -2,9 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const routes = require('./src/routes');
 const bulkProductRoutes = require('./src/routes/bulkProduct.r.js');
-const { apiReference } = require('@scalar/express-api-reference');
-const path = require('path');
-const swaggerDefinition = require("./swagger.js")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
