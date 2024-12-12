@@ -123,7 +123,7 @@ POST /api/products/bulk
     "discount": 0,
     "iskonto": "10%",
     "manufacturer": "Bosch",
-    "stock": true
+    "stock": true  // var = ture, yox=false, default=true
   },
   {
     "OemNo": "OF-789",

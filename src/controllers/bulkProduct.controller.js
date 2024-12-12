@@ -14,30 +14,65 @@ const createBulkProducts = async (req, res) => {
 
         for (const product of products) {
             try {
-                const existingProduct = await prisma.product.findUnique({
-                    where: { OemNo: product.OemNo }
-                });
-
-                if (existingProduct) {
+                // Validate required fields
+                if (!product.OemNo || !product.codeOfProduct || !product.image || 
+                    !product.priceWithOutKDV || !product.priceWithKDV) {
                     errors.push({
-                        OemNo: product.OemNo,
-                        error: 'Product with this OEM number already exists'
+                        OemNo: product.OemNo || 'unknown',
+                        error: 'Missing required fields'
                     });
                     continue;
                 }
 
+                // Handle manufacturer
+                let manufacturerId = null;
+                if (product.manufacturer) {
+                    try {
+                        // Try to find existing manufacturer by name
+                        let manufacturer = await prisma.manufacturer.findFirst({
+                            where: { 
+                                name: {
+                                    equals: product.manufacturer,
+                                    mode: 'insensitive'
+                                }
+                            }
+                        });
+
+                        // If manufacturer doesn't exist, create it
+                        if (!manufacturer) {
+                            manufacturer = await prisma.manufacturer.create({
+                                data: {
+                                    name: product.manufacturer
+                                }
+                            });
+                        }
+                        manufacturerId = manufacturer.id;
+                    } catch (error) {
+                        console.error('Manufacturer processing error:', error);
+                        errors.push({
+                            OemNo: product.OemNo,
+                            error: 'Error processing manufacturer'
+                        });
+                        continue;
+                    }
+                }
+
+                // Create product with validated data
                 const createdProduct = await prisma.product.create({
                     data: {
                         OemNo: String(product.OemNo),
                         codeOfProduct: String(product.codeOfProduct),
                         image: String(product.image),
                         name: String(product.name || 'no name'),
-                        price: Number(product.price),
+                        priceWithOutKDV: Number(product.priceWithOutKDV),
                         priceWithKDV: Number(product.priceWithKDV),
-                        discount: Number(product.discount || 0),
+                        discouisnt: Number(product.discouisnt || 0),
                         iskonto: product.iskonto ? String(product.iskonto) : null,
-                        manufacturer: product.manufacturer ? String(product.manufacturer) : '',
-                        stock: Boolean(product.stock)
+                        stock: product.stock === false ? false : true,
+                        manufacturerId: manufacturerId,
+                    },
+                    include: {
+                        Manufacturer: true
                     }
                 });
 
@@ -45,7 +80,7 @@ const createBulkProducts = async (req, res) => {
             } catch (error) {
                 console.error('Error creating product:', error);
                 errors.push({
-                    OemNo: product.OemNo,
+                    OemNo: product.OemNo || 'unknown',
                     error: error.message
                 });
             }

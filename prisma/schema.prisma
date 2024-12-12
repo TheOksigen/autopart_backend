@@ -26,8 +26,7 @@ model Product {
   codeOfProduct  String
   manufacturerId String?
   name           String  @default("no name")
-
-  manufacturer    String? @default("")
+  
   iskonto         String?
   priceWithOutKDV Float
   priceWithKDV    Float
