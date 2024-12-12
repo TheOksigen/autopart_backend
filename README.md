@@ -110,6 +110,80 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
+## Database Schema
+
+### Models
+
+#### User
+```prisma
+model User {
+  id       String     @id @default(uuid())
+  name     String
+  email    String     @unique
+  password String
+  role     Role       @default(USER)
+  cart     CartItem[]
+}
+```
+
+#### Product
+```prisma
+model Product {
+  id             String  @id @default(uuid())
+  codeOfProduct  String
+  manufacturerId String?
+  name           String  @default("no name")
+  manufacturer   String? @default("")
+  iskonto        String?
+  priceWithOutKDV Float
+  priceWithKDV    Float
+  stock           Boolean @default(true)
+  OemNo           String
+  image           String
+  discouisnt      Float   @default(0)
+  cartItems       CartItem[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Manufacturer    Manufacturer? @relation(fields: [manufacturerId], references: [id])
+}
+```
+
+#### Manufacturer
+```prisma
+model Manufacturer {
+  id        String    @id @default(uuid())
+  name      String
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+```
+
+#### CartItem
+```prisma
+model CartItem {
+  id        String   @id @default(uuid())
+  quantity  Int      @default(1)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+}
+```
+
+### Enums
+
+```prisma
+enum Role {
+  ADMIN
+  USER
+}
+```
+
 ## Product Schema
 
 ```prisma
