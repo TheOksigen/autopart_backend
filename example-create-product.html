@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Product Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #preview {
+            max-width: 200px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Create New Product</h2>
+    <form id="productForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+            <label for="name">Product Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="OemNo">OEM Number:</label>
+            <input type="text" id="OemNo" name="OemNo" required>
+        </div>
+
+        <div class="form-group">
+            <label for="codeOfProduct">Product Code:</label>
+            <input type="text" id="codeOfProduct" name="codeOfProduct" required>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" required>
+        </div>
+
+        <div class="form-group">
+            <label for="priceWithKDV">Price with KDV:</label>
+            <input type="number" id="priceWithKDV" name="priceWithKDV" required>
+        </div>
+
+        <div class="form-group">
+            <label for="discount">Discount:</label>
+            <input type="number" id="discount" name="discount" value="0">
+        </div>
+
+        <div class="form-group">
+            <label for="iskonto">Iskonto:</label>
+            <input type="text" id="iskonto" name="iskonto" placeholder="e.g., 5%">
+        </div>
+
+        <div class="form-group">
+            <label for="manufacturer">Manufacturer:</label>
+            <input type="text" id="manufacturer" name="manufacturer" required>
+        </div>
+
+        <div class="form-group">
+            <label for="stock">Stock Status:</label>
+            <select id="stock" name="stock">
+                <option value="true">In Stock</option>
+                <option value="false">Out of Stock</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="image">Product Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required onchange="previewImage(event)">
+            <img id="preview" src="" style="display: none;">
+        </div>
+
+        <button type="submit">Create Product</button>
+    </form>
+
+    <script>
+        // Preview image before upload
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('preview');
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Handle form submission
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const imageFile = document.getElementById('image').files[0];
+
+            // Convert image to base64
+            const base64Image = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(imageFile);
+            });
+
+            // Prepare the data
+            const data = {
+                name: form.name.value,
+                OemNo: form.OemNo.value,
+                codeOfProduct: form.codeOfProduct.value,
+                price: parseInt(form.price.value),
+                priceWithKDV: parseInt(form.priceWithKDV.value),
+                discount: parseInt(form.discount.value),
+                iskonto: form.iskonto.value,
+                manufacturer: form.manufacturer.value,
+                stock: form.stock.value === 'true',
+                image: base64Image
+            };
+
+            try {
+                // Replace with your actual API endpoint
+                const response = await fetch('http://localhost:3000/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add your authentication token here
+                        // 'Authorization': 'Bearer your_token_here'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert('Product created successfully!');
+                form.reset();
+                document.getElementById('preview').style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating product: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
