@@ -74,7 +74,8 @@ const login = async (req, res) => {
 };
 
 const verify = async (req, res) => {
-    res.json({ message: 'User verified' });
+    console.log(req.user)
+    res.status(200).json({ message: 'User verified' });
 }
 
 module.exports = {
