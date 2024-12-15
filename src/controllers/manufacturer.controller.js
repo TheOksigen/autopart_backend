@@ -26,7 +26,8 @@ const getAllManufacturers = async (req, res) => {
     const manufacturers = await prisma.manufacturer.findMany({
       include: {
         products: true
-      }
+      },
+      orderBy: { name: 'asc' }
     });
     res.json(manufacturers);
   } catch (error) {
