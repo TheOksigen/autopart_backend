@@ -3,20 +3,18 @@ const prisma = new PrismaClient();
 
 const createBulkProducts = async (req, res) => {
     try {
-        const products = req.body;
-
-        console.log(products)
+        const products = req.body;       
 
         if (!Array.isArray(products)) {
             return res.status(400).json({ message: 'Request body must be an array of products' });
         }
 
         const results = [];
-        const errors = [];
+        const errors = [];        
 
-        for (const product of products) {
-            try {                   
-                if (!product.OemNo || !product.codeOfProduct || !product.image || 
+        for (const product of products) {            
+            try {
+                if (!product.OemNo || !product.codeOfProduct || !product.image ||
                     !product.priceWithOutKDV || !product.priceWithKDV || !product.codeOfProduct) {
                     errors.push({
                         ID: product.codeOfProduct || 'unknown',
@@ -24,19 +22,19 @@ const createBulkProducts = async (req, res) => {
                     });
                     continue;
                 }
-                
+
                 let manufacturerId = null;
                 if (product.manufacturer) {
-                    try {                        
+                    try {
                         let manufacturer = await prisma.manufacturer.findFirst({
-                            where: { 
+                            where: {
                                 name: {
                                     equals: product.manufacturer,
                                     mode: 'insensitive'
                                 }
                             }
                         });
-                       
+
                         if (!manufacturer) {
                             manufacturer = await prisma.manufacturer.create({
                                 data: {
@@ -54,7 +52,7 @@ const createBulkProducts = async (req, res) => {
                         continue;
                     }
                 }
-                
+
                 const createdProduct = await prisma.product.create({
                     data: {
                         OemNo: String(product.OemNo.split("\n")) || 'unknown',

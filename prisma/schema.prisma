@@ -38,7 +38,7 @@ model Product {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   cartItems    CartItem[]
-  Manufacturer Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  Manufacturer Manufacturer? @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
 }
 
 model Manufacturer {

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { name, email, password } = req.body;
 
         let user = await prisma.user.findUnique({
             where: { email }
@@ -21,27 +21,14 @@ const register = async (req, res) => {
 
         user = await prisma.user.create({
             data: {
-                name: username,
+                name,
                 email,
                 password: hashedPassword
             }
         });
 
-        const payload = {
-            user: {
-                id: user.id
-            }
-        };
+        res.status(201).json({ message: 'User registered successfully', user });
 
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' },
-            (err, token) => {
-                if (err) throw err;
-                res.json({ token });
-            }
-        );
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: 'Server error' });
