@@ -73,7 +73,12 @@ const login = async (req, res) => {
     }
 };
 
+const verify = async (req, res) => {
+    res.json({ message: 'User verified' });
+}
+
 module.exports = {
     register,
-    login
+    login,
+    verify
 };
